@@ -8,21 +8,42 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Validate secrets
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          echo "$SSH_KEY" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key \
+          [ -z "$SSH_KEY" ]  && echo "ERROR: SSH_PRIVATE_KEY secret is empty" && exit 1 || echo "SSH_PRIVATE_KEY: set"
+          [ -z "$SSH_HOST" ] && echo "ERROR: SSH_HOST secret is empty"        && exit 1 || echo "SSH_HOST: $SSH_HOST"
+          [ -z "$SSH_USER" ] && echo "ERROR: SSH_USER secret is empty"        && exit 1 || echo "SSH_USER: $SSH_USER"
+
+      - name: Write SSH key
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -l -f ~/.ssh/deploy_key && echo "Key is valid"
+
+      - name: Check port 22
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: nc -zv "$SSH_HOST" 22 -w 5
+
+      - name: Deploy
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=10 \
             "$SSH_USER@$SSH_HOST" \
             'cd ~/fb-autoposter \
               && git pull origin main \
               && venv/bin/pip install -q -r requirements.txt \
               && sudo systemctl restart fb-autoposter \
               && echo "Deployed at $(date)"'
-          rm -f /tmp/deploy_key

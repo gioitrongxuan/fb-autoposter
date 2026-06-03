@@ -419,7 +419,7 @@ async function submitPost(payload,successMsg){
   btnS.disabled=true;btnN.disabled=true;
   try{
     const res=await fetch('/api/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Lỗi không xác định');}
+    if(!res.ok){let m='Lỗi không xác định';try{m=(await res.json()).detail||m;}catch{m=await res.text();}throw new Error(m);}
     showToast('create-toast',successMsg,'ok');
     document.getElementById('post-content').value='';
     document.getElementById('post-link').value='';
@@ -486,7 +486,7 @@ async function publishNow(id,btn){
   btn.disabled=true;btn.textContent='Đang đăng...';
   try{
     const res=await fetch('/api/posts/'+id+'/publish',{method:'POST'});
-    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Lỗi');}
+    if(!res.ok){let m='Lỗi';try{m=(await res.json()).detail||m;}catch{m=await res.text();}throw new Error(m);}
     document.getElementById('item-'+id)?.remove();
     refreshStats();
     if(!document.querySelector('#scheduled-list .post-item'))

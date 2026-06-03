@@ -142,8 +142,8 @@ async def create_post(request: Request, _: None = Depends(require_auth)):
         raise HTTPException(status_code=400, detail="content required")
 
     scheduled_at = body.get("scheduled_at")
-    link = body.get("link", "").strip() or None
-    topic = body.get("topic", "").strip() or None
+    link = (body.get("link") or "").strip() or None
+    topic = (body.get("topic") or "").strip() or None
     is_ai = body.get("is_ai_generated", False)
     publish_now = body.get("publish_now", False)
 

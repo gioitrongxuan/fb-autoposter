@@ -22,17 +22,17 @@ header h1{font-size:16px;font-weight:700}
 .tab:hover{color:#1877f2}
 .tab.active{color:#1877f2;border-bottom-color:#1877f2;font-weight:600}
 .badge{position:absolute;top:6px;right:4px;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center}
-
 .pane{display:none}.pane.active{display:block}
 
 /* ── Stats ── */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 12px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 12px 0}
 .card{background:#fff;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .card .lbl{font-size:10px;color:#65676b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
-.card .val{font-size:22px;font-weight:700;color:#1877f2}
+.card .val{font-size:20px;font-weight:700;color:#1877f2}
 .card .sub{font-size:10px;color:#65676b;margin-top:2px}
 .card .val.red{color:#e74c3c}
 .card .val.green{color:#27ae60}
+.card .val.purple{color:#7c3aed}
 
 /* ── Create tab ── */
 .create-wrap{padding:12px}
@@ -41,8 +41,8 @@ header h1{font-size:16px;font-weight:700}
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .field:last-child{margin-bottom:0}
 .field label{font-size:11px;font-weight:600;color:#444}
-.field input,.field textarea{border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit;resize:vertical;transition:border-color .15s}
-.field input:focus,.field textarea:focus{border-color:#1877f2}
+.field input,.field textarea,.field select{border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit;resize:vertical;transition:border-color .15s;background:#fff}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#1877f2}
 .field textarea{min-height:130px;line-height:1.5}
 .field .hint{font-size:10px;color:#999}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -73,7 +73,6 @@ header h1{font-size:16px;font-weight:700}
 .ai-badge{font-size:10px;color:#7c3aed;background:#f3e8ff;padding:2px 6px;border-radius:6px;font-weight:600}
 .link-badge{font-size:10px;color:#0066cc;background:#e7f3ff;padding:2px 6px;border-radius:6px}
 .post-content{font-size:13px;color:#1a1a2e;line-height:1.5;margin-bottom:10px;white-space:pre-wrap;word-break:break-word}
-.post-content.preview{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .post-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .btn-sm{border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
 .btn-publish{background:#27ae60;color:#fff}
@@ -81,8 +80,6 @@ header h1{font-size:16px;font-weight:700}
 .btn-publish:disabled{background:#bcc0c4}
 .btn-delete{background:#fde8e8;color:#e74c3c}
 .btn-delete:hover{background:#f5c6cb}
-.btn-expand{background:#f0f2f5;color:#65676b}
-.btn-expand:hover{background:#e4e6ea}
 
 /* ── History ── */
 .status-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px}
@@ -92,25 +89,55 @@ header h1{font-size:16px;font-weight:700}
 .fb-link:hover{text-decoration:underline}
 .error-text{font-size:11px;color:#e74c3c;margin-top:4px;word-break:break-all}
 
+/* ── Auto-post schedule panel ── */
+.auto-panel{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:12px 14px;margin-bottom:12px}
+.auto-panel-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.auto-panel-header h4{font-size:13px;font-weight:700;color:#7c3aed}
+.auto-off-note{font-size:12px;color:#999}
+.slot-list{display:flex;gap:8px;flex-wrap:wrap}
+.slot-chip{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.slot-chip.pending{background:#f3e8ff;color:#7c3aed}
+.slot-chip.done{background:#d4edda;color:#155724}
+.slot-chip.failed{background:#f8d7da;color:#721c24}
+
 /* ── Config tab ── */
 .cfg{padding:12px}
 .cfg-section{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px;margin-bottom:12px}
 .cfg-section h3{font-size:13px;font-weight:700;margin-bottom:12px;color:#1877f2}
+.cfg-section.auto h3{color:#7c3aed}
 .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .cfg .field{margin-bottom:0}
 .cfg .field.full{grid-column:1/-1}
 .save-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 
+/* ── Toggle ── */
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.toggle-row label{font-size:13px;font-weight:600;color:#1a1a2e;cursor:pointer}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#bcc0c4;border-radius:24px;transition:.2s}
+.slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.slider{background:#7c3aed}
+input:checked+.slider:before{transform:translateX(20px)}
+
+/* ── Time chips ── */
+.time-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tc{display:inline-flex;align-items:center;gap:4px;background:#f3e8ff;color:#7c3aed;border-radius:16px;padding:4px 10px;font-size:12px;font-weight:600}
+.tc .rm{background:none;border:none;cursor:pointer;color:#7c3aed;font-size:14px;line-height:1;padding:0 0 0 2px}
+.tc .rm:hover{color:#e74c3c}
+.add-time-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+.add-time-row input[type=time]{border:1px solid #ddd;border-radius:7px;padding:6px 10px;font-size:13px;outline:none}
+.add-time-row input[type=time]:focus{border-color:#7c3aed}
+.btn-add-time{background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-add-time:hover{background:#6d28d9}
+
 .empty{padding:32px 16px;text-align:center;color:#bcc0c4;font-size:13px}
 
 /* ── Responsive ── */
-@media(max-width:768px){
-  .field-row{grid-template-columns:1fr}
-  .field-grid{grid-template-columns:1fr}
+@media(max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .field-row,.field-grid{grid-template-columns:1fr}
   .cfg .field.full{grid-column:1}
-  .stats{gap:8px;padding:10px 10px 0}
-  .card{padding:10px 6px}
-  .card .val{font-size:20px}
 }
 @media(max-width:480px){
   header h1{font-size:14px}
@@ -139,6 +166,7 @@ header h1{font-size:16px;font-weight:700}
 <div class="stats">
   <div class="card"><div class="lbl">Đã lên lịch</div><div class="val" id="s-scheduled">—</div><div class="sub">bài chờ đăng</div></div>
   <div class="card"><div class="lbl">Đăng hôm nay</div><div class="val green" id="s-today">—</div><div class="sub">bài</div></div>
+  <div class="card"><div class="lbl">Auto hôm nay</div><div class="val purple" id="s-auto">—</div><div class="sub">bài</div></div>
   <div class="card"><div class="lbl">Thất bại</div><div class="val red" id="s-failed">—</div><div class="sub">bài</div></div>
 </div>
 
@@ -184,8 +212,18 @@ header h1{font-size:16px;font-weight:700}
 
 <!-- ══ LÊN LỊCH ══ -->
 <div id="pane-scheduled" class="pane">
-  <div class="post-list-wrap" id="scheduled-list">
-    <div class="empty">Chưa có bài nào được lên lịch</div>
+  <div class="post-list-wrap">
+    <!-- Auto-post schedule panel -->
+    <div id="auto-panel" class="auto-panel" style="display:none">
+      <div class="auto-panel-header">
+        <span>🤖</span>
+        <h4>Lịch tự động hôm nay</h4>
+        <span class="auto-off-note" id="auto-panel-note"></span>
+      </div>
+      <div class="slot-list" id="slot-list"></div>
+    </div>
+    <!-- Manual scheduled posts -->
+    <div id="scheduled-list"><div class="empty">Chưa có bài nào được lên lịch</div></div>
   </div>
 </div>
 
@@ -199,6 +237,45 @@ header h1{font-size:16px;font-weight:700}
 <!-- ══ CẤU HÌNH ══ -->
 <div id="pane-config" class="pane">
   <div class="cfg">
+
+    <!-- Auto-post config -->
+    <div class="cfg-section auto">
+      <h3>🤖 Tự động tạo & đăng bài</h3>
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="auto_enabled" />
+          <span class="slider"></span>
+        </label>
+        <label for="auto_enabled">Bật tự động đăng</label>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Múi giờ</label>
+          <select id="auto_utc_offset">
+            <option value="5">UTC+5</option>
+            <option value="6">UTC+6</option>
+            <option value="7" selected>UTC+7 (Việt Nam)</option>
+            <option value="8">UTC+8</option>
+            <option value="9">UTC+9</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Giờ đăng bài</label>
+          <div class="time-chips" id="time-chips-cfg"></div>
+          <div class="add-time-row">
+            <input type="time" id="new-time-input" value="08:00" />
+            <button class="btn-add-time" onclick="addTimeSlot()">+ Thêm giờ</button>
+          </div>
+          <span class="hint">Mỗi giờ trong danh sách sẽ tự động gen bài AI và đăng.</span>
+        </div>
+        <div class="field full">
+          <label>Chủ đề xoay vòng <span class="hint">(mỗi dòng 1 chủ đề — chọn ngẫu nhiên mỗi lần đăng)</span></label>
+          <textarea id="auto_topics" style="min-height:110px" placeholder="Giới thiệu sản phẩm mới&#10;Tip phối đồ hôm nay&#10;Khuyến mãi flash sale&#10;Review từ khách hàng&#10;Behind the scenes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand info -->
     <div class="cfg-section">
       <h3>🏪 Thông tin thương hiệu</h3>
       <div class="field-grid">
@@ -206,6 +283,8 @@ header h1{font-size:16px;font-weight:700}
         <div class="field full"><label>Thông tin shop / sản phẩm</label><textarea id="shop_context" style="min-height:90px" placeholder="Mô tả shop, sản phẩm chính, giá bán, chính sách..."></textarea></div>
       </div>
     </div>
+
+    <!-- Post style -->
     <div class="cfg-section">
       <h3>✍️ Phong cách bài đăng</h3>
       <div class="field-grid">
@@ -215,12 +294,15 @@ header h1{font-size:16px;font-weight:700}
         <div class="field"><label>Phong cách hashtag</label><input id="hashtag_style" placeholder="3-5 hashtag cuối bài" /></div>
       </div>
     </div>
+
+    <!-- Avoid -->
     <div class="cfg-section">
       <h3>🚫 Tránh</h3>
       <div class="field">
         <textarea id="avoid" placeholder="Mỗi dòng 1 điều cần tránh&#10;VD: Không dùng từ ngữ phức tạp&#10;Không đề cập đến đối thủ"></textarea>
       </div>
     </div>
+
     <div class="save-bar">
       <button class="btn-primary" onclick="saveProfile()">💾 Lưu & Áp dụng</button>
       <div class="toast" id="cfg-toast"></div>
@@ -245,7 +327,7 @@ function showTab(name){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TAB_NAMES[i]===name));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
   document.getElementById('pane-'+name).classList.add('active');
-  if(name==='scheduled')loadScheduled();
+  if(name==='scheduled'){loadScheduled();loadAutoStatus();}
   if(name==='history')loadHistory();
   if(name==='config')loadProfile();
 }
@@ -257,10 +339,38 @@ async function refreshStats(){
     const s=await r.json();
     document.getElementById('s-scheduled').textContent=s.scheduled;
     document.getElementById('s-today').textContent=s.published_today;
+    document.getElementById('s-auto').textContent=s.auto_today??'—';
     document.getElementById('s-failed').textContent=s.failed;
     const badge=document.getElementById('badge-scheduled');
     if(s.scheduled>0){badge.textContent=s.scheduled;badge.style.display='';}
     else{badge.style.display='none';}
+  }catch(e){}
+}
+
+/* ── Auto-post status panel ── */
+async function loadAutoStatus(){
+  try{
+    const r=await fetch('/api/auto-post/status');
+    const d=await r.json();
+    const panel=document.getElementById('auto-panel');
+    const note=document.getElementById('auto-panel-note');
+    const list=document.getElementById('slot-list');
+    panel.style.display='';
+    if(!d.enabled){
+      note.textContent='(đang tắt)';
+      list.innerHTML='<span style="font-size:12px;color:#999">Bật tự động đăng trong tab Cấu hình để sử dụng.</span>';
+      return;
+    }
+    note.textContent=`${d.topics_count} chủ đề · UTC+${d.utc_offset}`;
+    if(!d.slots.length){
+      list.innerHTML='<span style="font-size:12px;color:#999">Chưa có giờ nào được cấu hình.</span>';
+      return;
+    }
+    list.innerHTML=d.slots.map(s=>{
+      const cls=s.failed?'failed':s.fired?'done':'pending';
+      const icon=s.failed?'❌':s.fired?'✅':'⏳';
+      return `<div class="slot-chip ${cls}">${icon} ${esc(s.time)}</div>`;
+    }).join('');
   }catch(e){}
 }
 
@@ -271,10 +381,7 @@ async function generateAI(){
   const btn=document.getElementById('ai-btn');
   btn.disabled=true;btn.textContent='Đang tạo...';
   try{
-    const res=await fetch('/api/posts/generate',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic})
-    });
+    const res=await fetch('/api/posts/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic})});
     if(!res.ok)throw new Error(await res.text());
     const data=await res.json();
     document.getElementById('post-content').value=data.content;
@@ -285,50 +392,39 @@ async function generateAI(){
 }
 
 /* ── Create post ── */
-function getPostPayload(publishNow){
-  const content=document.getElementById('post-content').value.trim();
-  const link=document.getElementById('post-link').value.trim();
-  const timeVal=document.getElementById('post-time').value;
-  const topic=document.getElementById('ai-topic').value.trim();
-  const isAI=document.getElementById('ai-btn').textContent.includes('✨');
-  return {
-    content,
-    link:link||null,
-    scheduled_at:timeVal?new Date(timeVal).toISOString():null,
-    topic:topic||null,
-    is_ai_generated:isAI&&!!topic,
-    publish_now:!!publishNow,
-  };
-}
-
 async function schedulePost(){
-  const p=getPostPayload(false);
+  const p=buildPayload(false);
   if(!p.content){showToast('create-toast','⚠️ Nhập nội dung bài đăng.','err');return;}
   await submitPost(p,'📅 Đã lên lịch thành công!');
 }
-
 async function postNow(){
-  const p=getPostPayload(true);
+  const p=buildPayload(true);
   if(!p.content){showToast('create-toast','⚠️ Nhập nội dung bài đăng.','err');return;}
   p.scheduled_at=new Date().toISOString();
   await submitPost(p,'✅ Đã đăng lên Facebook!');
 }
-
+function buildPayload(publishNow){
+  const content=document.getElementById('post-content').value.trim();
+  const link=document.getElementById('post-link').value.trim();
+  const timeVal=document.getElementById('post-time').value;
+  const topic=document.getElementById('ai-topic').value.trim();
+  return{
+    content,link:link||null,
+    scheduled_at:timeVal?new Date(timeVal).toISOString():null,
+    topic:topic||null,is_ai_generated:!!topic,publish_now:!!publishNow,
+  };
+}
 async function submitPost(payload,successMsg){
   const btnS=document.getElementById('btn-schedule'),btnN=document.getElementById('btn-now');
   btnS.disabled=true;btnN.disabled=true;
   try{
-    const res=await fetch('/api/posts',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
+    const res=await fetch('/api/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok){const e=await res.json();throw new Error(e.detail||'Lỗi không xác định');}
     showToast('create-toast',successMsg,'ok');
     document.getElementById('post-content').value='';
     document.getElementById('post-link').value='';
     document.getElementById('ai-topic').value='';
-    initDateTime();updateCount();
-    refreshStats();
+    initDateTime();updateCount();refreshStats();
   }catch(e){showToast('create-toast','❌ '+e.message,'err');}
   btnS.disabled=false;btnN.disabled=false;
 }
@@ -338,14 +434,12 @@ async function loadScheduled(){
   try{
     const res=await fetch('/api/posts');
     const posts=await res.json();
-    renderScheduled(posts);
-    refreshStats();
+    renderScheduled(posts);refreshStats();
   }catch(e){document.getElementById('scheduled-list').innerHTML='<div class="empty">Lỗi tải dữ liệu.</div>';}
 }
-
 function renderScheduled(posts){
   const el=document.getElementById('scheduled-list');
-  if(!posts.length){el.innerHTML='<div class="empty">Chưa có bài nào được lên lịch</div>';return;}
+  if(!posts.length){el.innerHTML='<div class="empty">Chưa có bài nào lên lịch thủ công</div>';return;}
   el.innerHTML=posts.map(p=>postCard(p,'scheduled')).join('');
 }
 
@@ -356,7 +450,6 @@ async function loadHistory(){
     renderHistory(posts);
   }catch(e){document.getElementById('history-list').innerHTML='<div class="empty">Lỗi tải dữ liệu.</div>';}
 }
-
 function renderHistory(posts){
   const el=document.getElementById('history-list');
   if(!posts.length){el.innerHTML='<div class="empty">Chưa có lịch sử</div>';return;}
@@ -368,29 +461,22 @@ function postCard(p,mode){
   const sched=new Date(p.scheduled_at);
   const isPast=sched<now;
   const timeStr=sched.toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const pubStr=p.published_at?new Date(p.published_at).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-  const shortContent=p.content.length>200?p.content.slice(0,200)+'…':p.content;
-
   let metaBadges=`<span class="time-badge ${isPast&&mode==='scheduled'?'past':''}">${timeStr}</span>`;
   if(p.is_ai_generated)metaBadges+='<span class="ai-badge">✨ AI</span>';
   if(p.link)metaBadges+='<span class="link-badge">🔗 Link</span>';
   if(mode==='history')metaBadges+=`<span class="status-badge ${p.status==='published'?'published':'failed'}">${p.status==='published'?'✅ Đã đăng':'❌ Thất bại'}</span>`;
-
   let actions='';
   if(mode==='scheduled'){
-    actions=`
-      <button class="btn-sm btn-publish" onclick="publishNow('${p.id}',this)">⚡ Đăng ngay</button>
-      <button class="btn-sm btn-delete" onclick="deletePost('${p.id}',this)">🗑 Xóa</button>`;
+    actions=`<button class="btn-sm btn-publish" onclick="publishNow('${p.id}',this)">⚡ Đăng ngay</button>
+             <button class="btn-sm btn-delete" onclick="deletePost('${p.id}',this)">🗑 Xóa</button>`;
   }else if(p.status==='published'&&p.fb_post_id){
     actions=`<a class="fb-link" href="https://www.facebook.com/${esc(p.fb_post_id)}" target="_blank">Xem bài đăng →</a>`;
   }
-  if(p.status==='failed'&&p.error){
-    actions+=`<div class="error-text">${esc(p.error)}</div>`;
-  }
-
+  if(p.status==='failed'&&p.error)actions+=`<div class="error-text">${esc(p.error)}</div>`;
+  const pubStr=p.published_at?new Date(p.published_at).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
   return `<div class="post-item" id="item-${p.id}">
     <div class="post-meta">${metaBadges}${pubStr?`<span style="font-size:11px;color:#999">${pubStr}</span>`:''}</div>
-    <div class="post-content preview">${esc(p.content)}</div>
+    <div class="post-content">${esc(p.content)}</div>
     ${p.topic?`<div style="font-size:11px;color:#999;margin-bottom:8px">Chủ đề: ${esc(p.topic)}</div>`:''}
     <div class="post-actions">${actions}</div>
   </div>`;
@@ -404,10 +490,9 @@ async function publishNow(id,btn){
     document.getElementById('item-'+id)?.remove();
     refreshStats();
     if(!document.querySelector('#scheduled-list .post-item'))
-      document.getElementById('scheduled-list').innerHTML='<div class="empty">Chưa có bài nào được lên lịch</div>';
+      document.getElementById('scheduled-list').innerHTML='<div class="empty">Chưa có bài nào lên lịch thủ công</div>';
   }catch(e){alert('❌ '+e.message);btn.disabled=false;btn.textContent='⚡ Đăng ngay';}
 }
-
 async function deletePost(id,btn){
   if(!confirm('Xóa bài này?'))return;
   btn.disabled=true;
@@ -417,11 +502,33 @@ async function deletePost(id,btn){
     document.getElementById('item-'+id)?.remove();
     refreshStats();
     if(!document.querySelector('#scheduled-list .post-item'))
-      document.getElementById('scheduled-list').innerHTML='<div class="empty">Chưa có bài nào được lên lịch</div>';
+      document.getElementById('scheduled-list').innerHTML='<div class="empty">Chưa có bài nào lên lịch thủ công</div>';
   }catch(e){alert('❌ '+e.message);btn.disabled=false;}
 }
 
-/* ── Config ── */
+/* ── Config: time chips ── */
+let _timeSlots=[];
+function renderTimeChips(){
+  const el=document.getElementById('time-chips-cfg');
+  el.innerHTML=_timeSlots.map(t=>`
+    <span class="tc">${esc(t)}<button class="rm" onclick="removeTimeSlot('${esc(t)}')">×</button></span>
+  `).join('');
+}
+function addTimeSlot(){
+  const val=document.getElementById('new-time-input').value;
+  if(!val)return;
+  if(!_timeSlots.includes(val)){
+    _timeSlots.push(val);
+    _timeSlots.sort();
+    renderTimeChips();
+  }
+}
+function removeTimeSlot(t){
+  _timeSlots=_timeSlots.filter(s=>s!==t);
+  renderTimeChips();
+}
+
+/* ── Config load/save ── */
 async function loadProfile(){
   try{
     const res=await fetch('/api/profile');const d=await res.json();
@@ -432,6 +539,11 @@ async function loadProfile(){
     document.getElementById('emoji_usage').value=d.emoji_usage||'';
     document.getElementById('hashtag_style').value=d.hashtag_style||'';
     document.getElementById('avoid').value=(d.avoid||[]).join('\n');
+    const a=d.auto_post||{};
+    document.getElementById('auto_enabled').checked=!!a.enabled;
+    document.getElementById('auto_utc_offset').value=a.utc_offset??7;
+    _timeSlots=a.times||[];renderTimeChips();
+    document.getElementById('auto_topics').value=(a.topics||[]).join('\n');
   }catch(e){}
 }
 
@@ -445,6 +557,12 @@ async function saveProfile(){
     emoji_usage:document.getElementById('emoji_usage').value.trim(),
     hashtag_style:document.getElementById('hashtag_style').value.trim(),
     avoid:document.getElementById('avoid').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    auto_post:{
+      enabled:document.getElementById('auto_enabled').checked,
+      utc_offset:parseInt(document.getElementById('auto_utc_offset').value)||7,
+      times:[..._timeSlots],
+      topics:document.getElementById('auto_topics').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    },
   };
   try{
     const res=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});

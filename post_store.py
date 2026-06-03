@@ -1,7 +1,7 @@
 import json
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 STORE_FILE = Path("posts.json")
@@ -107,11 +107,34 @@ def list_history(limit: int = 50) -> list:
     return sorted(done, key=lambda p: p.get("published_at") or p["created_at"], reverse=True)[:limit]
 
 
+def auto_post_slot_used(slot_key: str) -> bool:
+    with _lock:
+        data = _load()
+    return slot_key in data.get("auto_post_log", {})
+
+
+def get_auto_post_slot_value(slot_key: str) -> str | None:
+    with _lock:
+        data = _load()
+    return data.get("auto_post_log", {}).get(slot_key)
+
+
+def record_auto_post_slot(slot_key: str, value: str):
+    with _lock:
+        data = _load()
+        log = data.setdefault("auto_post_log", {})
+        log[slot_key] = value
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).date().isoformat()
+        data["auto_post_log"] = {k: v for k, v in log.items() if k[:10] >= cutoff}
+        _save(data)
+
+
 def stats() -> dict:
     today = datetime.now(timezone.utc).date().isoformat()
     with _lock:
         data = _load()
     posts = data["posts"]
+    auto_log = data.get("auto_post_log", {})
     return {
         "scheduled": sum(1 for p in posts if p["status"] == "pending"),
         "published_today": sum(
@@ -120,4 +143,8 @@ def stats() -> dict:
         ),
         "failed": sum(1 for p in posts if p["status"] == "failed"),
         "total_published": sum(1 for p in posts if p["status"] == "published"),
+        "auto_today": sum(
+            1 for k, v in auto_log.items()
+            if k.startswith(today) and not str(v).startswith("FAILED")
+        ),
     }

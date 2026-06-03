@@ -1,9 +1,11 @@
 import os
 import json
+import random
 import asyncio
 import logging
 import secrets
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import FileResponse
@@ -39,10 +41,50 @@ async def _run_due_posts():
             logging.error(f"Failed to publish post {post['id']}: {e}")
 
 
+async def _run_auto_posts():
+    profile = post_engine.load_profile()
+    auto_cfg = profile.get("auto_post", {})
+    if not auto_cfg.get("enabled"):
+        return
+
+    times = auto_cfg.get("times", [])
+    topics = auto_cfg.get("topics", [])
+    if not times or not topics:
+        return
+
+    utc_offset = int(auto_cfg.get("utc_offset", 7))
+    tz = timezone(timedelta(hours=utc_offset))
+    now_local = datetime.now(tz)
+    current_hhmm = now_local.strftime("%H:%M")
+    today = now_local.date().isoformat()
+
+    for time_slot in times:
+        if current_hhmm != time_slot:
+            continue
+        slot_key = f"{today}_{time_slot}"
+        if post_store.auto_post_slot_used(slot_key):
+            continue
+
+        topic = random.choice(topics)
+        logging.info(f"Auto-post triggered: slot={slot_key}, topic={topic[:50]}")
+        try:
+            content = await generate_post(topic)
+            result = await post_to_page(content)
+            fb_id = result.get("id")
+            post = post_store.add_post(content, now_local.isoformat(), None, topic, True)
+            post_store.mark_published(post["id"], fb_id)
+            post_store.record_auto_post_slot(slot_key, post["id"])
+            logging.info(f"Auto-post success: slot={slot_key}, fb_id={fb_id}")
+        except Exception as e:
+            logging.error(f"Auto-post failed: slot={slot_key}, error={e}")
+            post_store.record_auto_post_slot(slot_key, f"FAILED:{str(e)[:100]}")
+
+
 async def _scheduler_loop():
     while True:
         try:
             await _run_due_posts()
+            await _run_auto_posts()
         except Exception as e:
             logging.error(f"Scheduler error: {e}")
         await asyncio.sleep(60)
@@ -153,6 +195,30 @@ async def api_delete_post(post_id: str, _: None = Depends(require_auth)):
     if not post_store.delete_post(post_id):
         raise HTTPException(status_code=404, detail="post not found or not pending")
     return {"status": "deleted"}
+
+
+@app.get("/api/auto-post/status")
+async def auto_post_status(_: None = Depends(require_auth)):
+    profile = post_engine.load_profile()
+    auto_cfg = profile.get("auto_post", {})
+    utc_offset = int(auto_cfg.get("utc_offset", 7))
+    tz = timezone(timedelta(hours=utc_offset))
+    today = datetime.now(tz).date().isoformat()
+    slots = [
+        {
+            "time": t,
+            "slot_key": f"{today}_{t}",
+            "fired": post_store.auto_post_slot_used(f"{today}_{t}"),
+            "failed": str(post_store.get_auto_post_slot_value(f"{today}_{t}") or "").startswith("FAILED"),
+        }
+        for t in sorted(auto_cfg.get("times", []))
+    ]
+    return {
+        "enabled": auto_cfg.get("enabled", False),
+        "slots": slots,
+        "topics_count": len(auto_cfg.get("topics", [])),
+        "utc_offset": utc_offset,
+    }
 
 
 @app.get("/api/profile")

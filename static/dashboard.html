@@ -110,6 +110,12 @@ header h1{font-size:16px;font-weight:700}
 .cfg .field.full{grid-column:1/-1}
 .save-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 
+/* ── Image preview ── */
+.img-preview-wrap{margin-top:10px;display:none}
+.img-preview-wrap img{width:100%;max-height:280px;object-fit:cover;border-radius:8px;border:1px solid #e4e6ea}
+.img-preview-loading{padding:20px;text-align:center;background:#f3e8ff;border-radius:8px;color:#7c3aed;font-size:13px}
+.img-preview-prompt{font-size:10px;color:#999;margin-top:4px;font-style:italic}
+
 /* ── Toggle ── */
 .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .toggle-row label{font-size:13px;font-weight:600;color:#1a1a2e;cursor:pointer}
@@ -191,6 +197,22 @@ input:checked+.slider:before{transform:translateX(20px)}
         <textarea id="post-content" placeholder="Nhập nội dung bài đăng hoặc dùng AI tạo bên trên..." oninput="updateCount()"></textarea>
         <div class="char-count" id="char-count">0 ký tự</div>
       </div>
+      <!-- Image preview -->
+      <div class="field">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="toggle" style="flex-shrink:0">
+            <input type="checkbox" id="include-image" onchange="onImageToggle()" />
+            <span class="slider"></span>
+          </label>
+          <label for="include-image" style="font-size:12px;font-weight:600;color:#444;cursor:pointer">🖼 Kèm ảnh AI</label>
+          <button class="btn-ai" id="preview-img-btn" onclick="previewImage()" style="padding:5px 10px;font-size:11px;display:none">🔄 Tạo ảnh</button>
+        </div>
+        <div class="img-preview-wrap" id="img-preview-wrap">
+          <div class="img-preview-loading" id="img-loading" style="display:none">✨ Đang tạo ảnh...</div>
+          <img id="img-preview" src="" alt="" style="display:none" />
+          <div class="img-preview-prompt" id="img-prompt"></div>
+        </div>
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Link đính kèm (tuỳ chọn)</label>
@@ -271,6 +293,15 @@ input:checked+.slider:before{transform:translateX(20px)}
         <div class="field full">
           <label>Chủ đề xoay vòng <span class="hint">(mỗi dòng 1 chủ đề — chọn ngẫu nhiên mỗi lần đăng)</span></label>
           <textarea id="auto_topics" style="min-height:110px" placeholder="Giới thiệu sản phẩm mới&#10;Tip phối đồ hôm nay&#10;Khuyến mãi flash sale&#10;Review từ khách hàng&#10;Behind the scenes"></textarea>
+        </div>
+        <div class="field full">
+          <div class="toggle-row" style="margin-bottom:0">
+            <label class="toggle">
+              <input type="checkbox" id="auto_include_image" />
+              <span class="slider"></span>
+            </label>
+            <label for="auto_include_image" style="font-size:13px;cursor:pointer">🖼 Tự động kèm ảnh AI mỗi bài</label>
+          </div>
         </div>
       </div>
     </div>
@@ -391,6 +422,34 @@ async function generateAI(){
   btn.disabled=false;btn.textContent='✨ Tạo AI';
 }
 
+/* ── Image preview ── */
+function onImageToggle(){
+  const on=document.getElementById('include-image').checked;
+  document.getElementById('preview-img-btn').style.display=on?'':'none';
+  document.getElementById('img-preview-wrap').style.display=on?'':'none';
+  if(on&&document.getElementById('post-content').value.trim())previewImage();
+}
+async function previewImage(){
+  const content=document.getElementById('post-content').value.trim();
+  if(!content){showToast('create-toast','⚠️ Tạo nội dung trước rồi mới preview ảnh.','err');return;}
+  const btn=document.getElementById('preview-img-btn');
+  btn.disabled=true;
+  document.getElementById('img-preview-wrap').style.display='';
+  document.getElementById('img-loading').style.display='';
+  document.getElementById('img-preview').style.display='none';
+  try{
+    const res=await fetch('/api/posts/preview-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content})});
+    const d=await res.json();
+    const img=document.getElementById('img-preview');
+    img.src=d.url;
+    img.style.display='none';
+    img.onload=()=>{document.getElementById('img-loading').style.display='none';img.style.display='';};
+    img.onerror=()=>{document.getElementById('img-loading').textContent='⚠️ Không tải được ảnh';};
+    document.getElementById('img-prompt').textContent='Prompt: '+d.prompt;
+  }catch(e){document.getElementById('img-loading').textContent='❌ Lỗi tạo ảnh';}
+  btn.disabled=false;
+}
+
 /* ── Create post ── */
 async function schedulePost(){
   const p=buildPayload(false);
@@ -408,10 +467,12 @@ function buildPayload(publishNow){
   const link=document.getElementById('post-link').value.trim();
   const timeVal=document.getElementById('post-time').value;
   const topic=document.getElementById('ai-topic').value.trim();
+  const includeImage=document.getElementById('include-image').checked;
   return{
     content,link:link||null,
     scheduled_at:timeVal?new Date(timeVal).toISOString():null,
-    topic:topic||null,is_ai_generated:!!topic,publish_now:!!publishNow,
+    topic:topic||null,is_ai_generated:!!topic,
+    include_image:includeImage,publish_now:!!publishNow,
   };
 }
 async function submitPost(payload,successMsg){
@@ -544,6 +605,7 @@ async function loadProfile(){
     document.getElementById('auto_utc_offset').value=a.utc_offset??7;
     _timeSlots=a.times||[];renderTimeChips();
     document.getElementById('auto_topics').value=(a.topics||[]).join('\n');
+    document.getElementById('auto_include_image').checked=!!a.include_image;
   }catch(e){}
 }
 
@@ -562,6 +624,7 @@ async function saveProfile(){
       utc_offset:parseInt(document.getElementById('auto_utc_offset').value)||7,
       times:[..._timeSlots],
       topics:document.getElementById('auto_topics').value.split('\n').map(s=>s.trim()).filter(Boolean),
+      include_image:document.getElementById('auto_include_image').checked,
     },
   };
   try{

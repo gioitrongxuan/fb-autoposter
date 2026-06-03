@@ -22,7 +22,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def add_post(content: str, scheduled_at: str | None, link: str | None, topic: str | None, is_ai: bool) -> dict:
+def add_post(content: str, scheduled_at: str | None, link: str | None, topic: str | None, is_ai: bool, include_image: bool = False) -> dict:
     now = _now_iso()
     post = {
         "id": str(uuid.uuid4()),
@@ -36,6 +36,7 @@ def add_post(content: str, scheduled_at: str | None, link: str | None, topic: st
         "error": None,
         "topic": topic,
         "is_ai_generated": is_ai,
+        "include_image": include_image,
     }
     with _lock:
         data = _load()

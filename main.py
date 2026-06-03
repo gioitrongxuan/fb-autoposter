@@ -10,8 +10,9 @@ from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fb_client import post_to_page
+from fb_client import post_to_page, post_to_page_with_image
 from ai_client import generate_post
+import image_client
 import post_store
 import post_engine
 import ai_client as _ai
@@ -29,13 +30,24 @@ def require_auth(credentials: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(status_code=401, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
 
 
+async def _publish_post(content: str, link: str = None, include_image: bool = False) -> dict:
+    if include_image:
+        img = await image_client.generate_image_for_post(content)
+        if img:
+            return await post_to_page_with_image(content, img)
+        logging.warning("Image generation failed, falling back to text-only post")
+    return await post_to_page(content, link)
+
+
 async def _run_due_posts():
     due = post_store.get_due_posts()
     for post in due:
         try:
-            result = await post_to_page(post["content"], post.get("link"))
-            post_store.mark_published(post["id"], result.get("id"))
-            logging.info(f"Published post {post['id']} → FB {result.get('id')}")
+            result = await _publish_post(
+                post["content"], post.get("link"), post.get("include_image", False)
+            )
+            post_store.mark_published(post["id"], result.get("id") or result.get("post_id"))
+            logging.info(f"Published post {post['id']} → FB {result}")
         except Exception as e:
             post_store.mark_failed(post["id"], str(e))
             logging.error(f"Failed to publish post {post['id']}: {e}")
@@ -52,6 +64,7 @@ async def _run_auto_posts():
     if not times or not topics:
         return
 
+    include_image = auto_cfg.get("include_image", False)
     utc_offset = int(auto_cfg.get("utc_offset", 7))
     tz = timezone(timedelta(hours=utc_offset))
     now_local = datetime.now(tz)
@@ -69,9 +82,9 @@ async def _run_auto_posts():
         logging.info(f"Auto-post triggered: slot={slot_key}, topic={topic[:50]}")
         try:
             content = await generate_post(topic)
-            result = await post_to_page(content)
-            fb_id = result.get("id")
-            post = post_store.add_post(content, now_local.isoformat(), None, topic, True)
+            result = await _publish_post(content, include_image=include_image)
+            fb_id = result.get("id") or result.get("post_id")
+            post = post_store.add_post(content, now_local.isoformat(), None, topic, True, include_image)
             post_store.mark_published(post["id"], fb_id)
             post_store.record_auto_post_slot(slot_key, post["id"])
             logging.info(f"Auto-post success: slot={slot_key}, fb_id={fb_id}")
@@ -134,10 +147,31 @@ async def api_history(_: None = Depends(require_auth)):
     return post_store.list_history()
 
 
+@app.post("/api/posts/generate")
+async def api_generate(request: Request, _: None = Depends(require_auth)):
+    body = await request.json()
+    topic = (body.get("topic") or "").strip()
+    if not topic:
+        raise HTTPException(status_code=400, detail="topic required")
+    content = await generate_post(topic)
+    return {"content": content}
+
+
+@app.post("/api/posts/preview-image")
+async def api_preview_image(request: Request, _: None = Depends(require_auth)):
+    body = await request.json()
+    content = (body.get("content") or "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="content required")
+    prompt = await image_client.make_image_prompt(content)
+    url = image_client.get_image_url(prompt)
+    return {"url": url, "prompt": prompt}
+
+
 @app.post("/api/posts")
 async def create_post(request: Request, _: None = Depends(require_auth)):
     body = await request.json()
-    content = body.get("content", "").strip()
+    content = (body.get("content") or "").strip()
     if not content:
         raise HTTPException(status_code=400, detail="content required")
 
@@ -145,16 +179,18 @@ async def create_post(request: Request, _: None = Depends(require_auth)):
     link = (body.get("link") or "").strip() or None
     topic = (body.get("topic") or "").strip() or None
     is_ai = body.get("is_ai_generated", False)
+    include_image = body.get("include_image", False)
     publish_now = body.get("publish_now", False)
 
-    post = post_store.add_post(content, scheduled_at, link, topic, is_ai)
+    post = post_store.add_post(content, scheduled_at, link, topic, is_ai, include_image)
 
     if publish_now:
         try:
-            result = await post_to_page(post["content"], post.get("link"))
-            post_store.mark_published(post["id"], result.get("id"))
+            result = await _publish_post(post["content"], post.get("link"), include_image)
+            fb_id = result.get("id") or result.get("post_id")
+            post_store.mark_published(post["id"], fb_id)
             post["status"] = "published"
-            post["fb_post_id"] = result.get("id")
+            post["fb_post_id"] = fb_id
         except Exception as e:
             post_store.mark_failed(post["id"], str(e))
             post["status"] = "failed"
@@ -162,16 +198,6 @@ async def create_post(request: Request, _: None = Depends(require_auth)):
             raise HTTPException(status_code=502, detail=str(e))
 
     return post
-
-
-@app.post("/api/posts/generate")
-async def api_generate(request: Request, _: None = Depends(require_auth)):
-    body = await request.json()
-    topic = body.get("topic", "").strip()
-    if not topic:
-        raise HTTPException(status_code=400, detail="topic required")
-    content = await generate_post(topic)
-    return {"content": content}
 
 
 @app.post("/api/posts/{post_id}/publish")
@@ -182,9 +208,10 @@ async def api_publish_now(post_id: str, _: None = Depends(require_auth)):
     if post["status"] != "pending":
         raise HTTPException(status_code=400, detail="post is not pending")
     try:
-        result = await post_to_page(post["content"], post.get("link"))
-        post_store.mark_published(post_id, result.get("id"))
-        return {"status": "published", "fb_post_id": result.get("id")}
+        result = await _publish_post(post["content"], post.get("link"), post.get("include_image", False))
+        fb_id = result.get("id") or result.get("post_id")
+        post_store.mark_published(post_id, fb_id)
+        return {"status": "published", "fb_post_id": fb_id}
     except Exception as e:
         post_store.mark_failed(post_id, str(e))
         raise HTTPException(status_code=502, detail=str(e))

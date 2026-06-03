@@ -14,6 +14,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          known_hosts: any
           script: |
             cd ~/fb-autoposter
             git pull origin main

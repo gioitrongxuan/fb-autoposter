@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+httpx
+google-genai
+python-dotenv
+aiofiles

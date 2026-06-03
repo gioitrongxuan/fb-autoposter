@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FB AutoPoster Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+
+/* ── Header ── */
+header{background:#1877f2;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h1{font-size:16px;font-weight:700}
+.live{display:flex;align-items:center;gap:5px;font-size:12px}
+.dot{width:7px;height:7px;background:#42f563;border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Tabs ── */
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e4e6ea;padding:0 12px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;padding:11px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:#65676b;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s}
+.tab:hover{color:#1877f2}
+.tab.active{color:#1877f2;border-bottom-color:#1877f2;font-weight:600}
+.badge{position:absolute;top:6px;right:4px;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center}
+
+.pane{display:none}.pane.active{display:block}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 12px 0}
+.card{background:#fff;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card .lbl{font-size:10px;color:#65676b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.card .val{font-size:22px;font-weight:700;color:#1877f2}
+.card .sub{font-size:10px;color:#65676b;margin-top:2px}
+.card .val.red{color:#e74c3c}
+.card .val.green{color:#27ae60}
+
+/* ── Create tab ── */
+.create-wrap{padding:12px}
+.section{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px;margin-bottom:12px}
+.section h3{font-size:13px;font-weight:700;color:#1877f2;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:11px;font-weight:600;color:#444}
+.field input,.field textarea{border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit;resize:vertical;transition:border-color .15s}
+.field input:focus,.field textarea:focus{border-color:#1877f2}
+.field textarea{min-height:130px;line-height:1.5}
+.field .hint{font-size:10px;color:#999}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ai-row{display:flex;gap:8px}
+.ai-row input{flex:1}
+.btn-ai{background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
+.btn-ai:hover{background:#6d28d9}
+.btn-ai:disabled{background:#bcc0c4;cursor:not-allowed}
+.action-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
+.btn-primary{background:#1877f2;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:#166fe5}
+.btn-primary:disabled{background:#bcc0c4;cursor:not-allowed}
+.btn-secondary{background:#e7f3ff;color:#1877f2;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-secondary:hover{background:#cce4ff}
+.btn-secondary:disabled{background:#e4e6ea;color:#bcc0c4;cursor:not-allowed}
+.toast{font-size:12px;padding:7px 12px;border-radius:7px;display:none}
+.toast.ok{background:#d4edda;color:#155724;display:block}
+.toast.err{background:#f8d7da;color:#721c24;display:block}
+.char-count{font-size:10px;color:#999;text-align:right;margin-top:2px}
+
+/* ── Post list ── */
+.post-list-wrap{padding:12px}
+.post-item{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:12px 14px;margin-bottom:10px}
+.post-item:last-child{margin-bottom:0}
+.post-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.time-badge{font-size:11px;font-weight:600;color:#fff;background:#1877f2;padding:3px 8px;border-radius:10px;white-space:nowrap}
+.time-badge.past{background:#e74c3c}
+.ai-badge{font-size:10px;color:#7c3aed;background:#f3e8ff;padding:2px 6px;border-radius:6px;font-weight:600}
+.link-badge{font-size:10px;color:#0066cc;background:#e7f3ff;padding:2px 6px;border-radius:6px}
+.post-content{font-size:13px;color:#1a1a2e;line-height:1.5;margin-bottom:10px;white-space:pre-wrap;word-break:break-word}
+.post-content.preview{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.post-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-sm{border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-publish{background:#27ae60;color:#fff}
+.btn-publish:hover{background:#219a52}
+.btn-publish:disabled{background:#bcc0c4}
+.btn-delete{background:#fde8e8;color:#e74c3c}
+.btn-delete:hover{background:#f5c6cb}
+.btn-expand{background:#f0f2f5;color:#65676b}
+.btn-expand:hover{background:#e4e6ea}
+
+/* ── History ── */
+.status-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px}
+.status-badge.published{background:#d4edda;color:#155724}
+.status-badge.failed{background:#f8d7da;color:#721c24}
+.fb-link{font-size:11px;color:#1877f2;text-decoration:none}
+.fb-link:hover{text-decoration:underline}
+.error-text{font-size:11px;color:#e74c3c;margin-top:4px;word-break:break-all}
+
+/* ── Config tab ── */
+.cfg{padding:12px}
+.cfg-section{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px;margin-bottom:12px}
+.cfg-section h3{font-size:13px;font-weight:700;margin-bottom:12px;color:#1877f2}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cfg .field{margin-bottom:0}
+.cfg .field.full{grid-column:1/-1}
+.save-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.empty{padding:32px 16px;text-align:center;color:#bcc0c4;font-size:13px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .field-row{grid-template-columns:1fr}
+  .field-grid{grid-template-columns:1fr}
+  .cfg .field.full{grid-column:1}
+  .stats{gap:8px;padding:10px 10px 0}
+  .card{padding:10px 6px}
+  .card .val{font-size:20px}
+}
+@media(max-width:480px){
+  header h1{font-size:14px}
+  .stats{gap:6px;padding:8px 8px 0}
+  .card .lbl{font-size:9px}
+  .card .val{font-size:18px}
+  .card .sub{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📅 FB AutoPoster</h1>
+  <div class="live"><div class="dot"></div> LIVE</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('create')">✏️ Tạo bài</button>
+  <button class="tab" onclick="showTab('scheduled')" id="tab-scheduled">📅 Lên lịch<span class="badge" id="badge-scheduled" style="display:none"></span></button>
+  <button class="tab" onclick="showTab('history')">📋 Lịch sử</button>
+  <button class="tab" onclick="showTab('config')">⚙️ Cấu hình</button>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="card"><div class="lbl">Đã lên lịch</div><div class="val" id="s-scheduled">—</div><div class="sub">bài chờ đăng</div></div>
+  <div class="card"><div class="lbl">Đăng hôm nay</div><div class="val green" id="s-today">—</div><div class="sub">bài</div></div>
+  <div class="card"><div class="lbl">Thất bại</div><div class="val red" id="s-failed">—</div><div class="sub">bài</div></div>
+</div>
+
+<!-- ══ TẠO BÀI ══ -->
+<div id="pane-create" class="pane active">
+  <div class="create-wrap">
+    <div class="section">
+      <h3>✨ Tạo nội dung bằng AI</h3>
+      <div class="field">
+        <label>Chủ đề / Yêu cầu</label>
+        <div class="ai-row">
+          <input id="ai-topic" placeholder="VD: Giới thiệu túi xách mới, giá 299k, chất liệu da PU cao cấp..." />
+          <button class="btn-ai" id="ai-btn" onclick="generateAI()">✨ Tạo AI</button>
+        </div>
+        <span class="hint">Nhập chủ đề rồi bấm Tạo AI — nội dung sẽ tự điền xuống bên dưới.</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📝 Nội dung bài đăng</h3>
+      <div class="field">
+        <textarea id="post-content" placeholder="Nhập nội dung bài đăng hoặc dùng AI tạo bên trên..." oninput="updateCount()"></textarea>
+        <div class="char-count" id="char-count">0 ký tự</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Link đính kèm (tuỳ chọn)</label>
+          <input id="post-link" placeholder="https://..." />
+        </div>
+        <div class="field">
+          <label>Thời gian đăng</label>
+          <input type="datetime-local" id="post-time" />
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn-primary" id="btn-schedule" onclick="schedulePost()">📅 Lên lịch</button>
+        <button class="btn-secondary" id="btn-now" onclick="postNow()">⚡ Đăng ngay</button>
+        <div class="toast" id="create-toast"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LÊN LỊCH ══ -->
+<div id="pane-scheduled" class="pane">
+  <div class="post-list-wrap" id="scheduled-list">
+    <div class="empty">Chưa có bài nào được lên lịch</div>
+  </div>
+</div>
+
+<!-- ══ LỊCH SỬ ══ -->
+<div id="pane-history" class="pane">
+  <div class="post-list-wrap" id="history-list">
+    <div class="empty">Chưa có lịch sử</div>
+  </div>
+</div>
+
+<!-- ══ CẤU HÌNH ══ -->
+<div id="pane-config" class="pane">
+  <div class="cfg">
+    <div class="cfg-section">
+      <h3>🏪 Thông tin thương hiệu</h3>
+      <div class="field-grid">
+        <div class="field full"><label>Tên thương hiệu / Page</label><input id="brand_name" placeholder="VD: Shop Thời Trang ABC" /></div>
+        <div class="field full"><label>Thông tin shop / sản phẩm</label><textarea id="shop_context" style="min-height:90px" placeholder="Mô tả shop, sản phẩm chính, giá bán, chính sách..."></textarea></div>
+      </div>
+    </div>
+    <div class="cfg-section">
+      <h3>✍️ Phong cách bài đăng</h3>
+      <div class="field-grid">
+        <div class="field"><label>Giọng điệu</label><input id="brand_voice" placeholder="thân thiện, gần gũi, chuyên nghiệp" /></div>
+        <div class="field"><label>Độ dài bài</label><input id="post_length" placeholder="3-5 câu, súc tích" /></div>
+        <div class="field"><label>Dùng emoji</label><input id="emoji_usage" placeholder="vừa phải, 1-2 emoji mỗi bài" /></div>
+        <div class="field"><label>Phong cách hashtag</label><input id="hashtag_style" placeholder="3-5 hashtag cuối bài" /></div>
+      </div>
+    </div>
+    <div class="cfg-section">
+      <h3>🚫 Tránh</h3>
+      <div class="field">
+        <textarea id="avoid" placeholder="Mỗi dòng 1 điều cần tránh&#10;VD: Không dùng từ ngữ phức tạp&#10;Không đề cập đến đối thủ"></textarea>
+      </div>
+    </div>
+    <div class="save-bar">
+      <button class="btn-primary" onclick="saveProfile()">💾 Lưu & Áp dụng</button>
+      <div class="toast" id="cfg-toast"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ── Init datetime ── */
+function initDateTime(){
+  const dt=document.getElementById('post-time');
+  const d=new Date();d.setMinutes(d.getMinutes()+30);
+  dt.value=d.toISOString().slice(0,16);
+}
+initDateTime();
+
+/* ── Tabs ── */
+const TAB_NAMES=['create','scheduled','history','config'];
+function showTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TAB_NAMES[i]===name));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+  if(name==='scheduled')loadScheduled();
+  if(name==='history')loadHistory();
+  if(name==='config')loadProfile();
+}
+
+/* ── Stats ── */
+async function refreshStats(){
+  try{
+    const r=await fetch('/api/stats');
+    const s=await r.json();
+    document.getElementById('s-scheduled').textContent=s.scheduled;
+    document.getElementById('s-today').textContent=s.published_today;
+    document.getElementById('s-failed').textContent=s.failed;
+    const badge=document.getElementById('badge-scheduled');
+    if(s.scheduled>0){badge.textContent=s.scheduled;badge.style.display='';}
+    else{badge.style.display='none';}
+  }catch(e){}
+}
+
+/* ── AI generate ── */
+async function generateAI(){
+  const topic=document.getElementById('ai-topic').value.trim();
+  if(!topic){showToast('create-toast','⚠️ Nhập chủ đề trước.','err');return;}
+  const btn=document.getElementById('ai-btn');
+  btn.disabled=true;btn.textContent='Đang tạo...';
+  try{
+    const res=await fetch('/api/posts/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({topic})
+    });
+    if(!res.ok)throw new Error(await res.text());
+    const data=await res.json();
+    document.getElementById('post-content').value=data.content;
+    updateCount();
+    showToast('create-toast','✅ Đã tạo nội dung!','ok');
+  }catch(e){showToast('create-toast','❌ Lỗi: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='✨ Tạo AI';
+}
+
+/* ── Create post ── */
+function getPostPayload(publishNow){
+  const content=document.getElementById('post-content').value.trim();
+  const link=document.getElementById('post-link').value.trim();
+  const timeVal=document.getElementById('post-time').value;
+  const topic=document.getElementById('ai-topic').value.trim();
+  const isAI=document.getElementById('ai-btn').textContent.includes('✨');
+  return {
+    content,
+    link:link||null,
+    scheduled_at:timeVal?new Date(timeVal).toISOString():null,
+    topic:topic||null,
+    is_ai_generated:isAI&&!!topic,
+    publish_now:!!publishNow,
+  };
+}
+
+async function schedulePost(){
+  const p=getPostPayload(false);
+  if(!p.content){showToast('create-toast','⚠️ Nhập nội dung bài đăng.','err');return;}
+  await submitPost(p,'📅 Đã lên lịch thành công!');
+}
+
+async function postNow(){
+  const p=getPostPayload(true);
+  if(!p.content){showToast('create-toast','⚠️ Nhập nội dung bài đăng.','err');return;}
+  p.scheduled_at=new Date().toISOString();
+  await submitPost(p,'✅ Đã đăng lên Facebook!');
+}
+
+async function submitPost(payload,successMsg){
+  const btnS=document.getElementById('btn-schedule'),btnN=document.getElementById('btn-now');
+  btnS.disabled=true;btnN.disabled=true;
+  try{
+    const res=await fetch('/api/posts',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Lỗi không xác định');}
+    showToast('create-toast',successMsg,'ok');
+    document.getElementById('post-content').value='';
+    document.getElementById('post-link').value='';
+    document.getElementById('ai-topic').value='';
+    initDateTime();updateCount();
+    refreshStats();
+  }catch(e){showToast('create-toast','❌ '+e.message,'err');}
+  btnS.disabled=false;btnN.disabled=false;
+}
+
+/* ── Scheduled list ── */
+async function loadScheduled(){
+  try{
+    const res=await fetch('/api/posts');
+    const posts=await res.json();
+    renderScheduled(posts);
+    refreshStats();
+  }catch(e){document.getElementById('scheduled-list').innerHTML='<div class="empty">Lỗi tải dữ liệu.</div>';}
+}
+
+function renderScheduled(posts){
+  const el=document.getElementById('scheduled-list');
+  if(!posts.length){el.innerHTML='<div class="empty">Chưa có bài nào được lên lịch</div>';return;}
+  el.innerHTML=posts.map(p=>postCard(p,'scheduled')).join('');
+}
+
+async function loadHistory(){
+  try{
+    const res=await fetch('/api/posts/history');
+    const posts=await res.json();
+    renderHistory(posts);
+  }catch(e){document.getElementById('history-list').innerHTML='<div class="empty">Lỗi tải dữ liệu.</div>';}
+}
+
+function renderHistory(posts){
+  const el=document.getElementById('history-list');
+  if(!posts.length){el.innerHTML='<div class="empty">Chưa có lịch sử</div>';return;}
+  el.innerHTML=posts.map(p=>postCard(p,'history')).join('');
+}
+
+function postCard(p,mode){
+  const now=new Date();
+  const sched=new Date(p.scheduled_at);
+  const isPast=sched<now;
+  const timeStr=sched.toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const pubStr=p.published_at?new Date(p.published_at).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+  const shortContent=p.content.length>200?p.content.slice(0,200)+'…':p.content;
+
+  let metaBadges=`<span class="time-badge ${isPast&&mode==='scheduled'?'past':''}">${timeStr}</span>`;
+  if(p.is_ai_generated)metaBadges+='<span class="ai-badge">✨ AI</span>';
+  if(p.link)metaBadges+='<span class="link-badge">🔗 Link</span>';
+  if(mode==='history')metaBadges+=`<span class="status-badge ${p.status==='published'?'published':'failed'}">${p.status==='published'?'✅ Đã đăng':'❌ Thất bại'}</span>`;
+
+  let actions='';
+  if(mode==='scheduled'){
+    actions=`
+      <button class="btn-sm btn-publish" onclick="publishNow('${p.id}',this)">⚡ Đăng ngay</button>
+      <button class="btn-sm btn-delete" onclick="deletePost('${p.id}',this)">🗑 Xóa</button>`;
+  }else if(p.status==='published'&&p.fb_post_id){
+    actions=`<a class="fb-link" href="https://www.facebook.com/${esc(p.fb_post_id)}" target="_blank">Xem bài đăng →</a>`;
+  }
+  if(p.status==='failed'&&p.error){
+    actions+=`<div class="error-text">${esc(p.error)}</div>`;
+  }
+
+  return `<div class="post-item" id="item-${p.id}">
+    <div class="post-meta">${metaBadges}${pubStr?`<span style="font-size:11px;color:#999">${pubStr}</span>`:''}</div>
+    <div class="post-content preview">${esc(p.content)}</div>
+    ${p.topic?`<div style="font-size:11px;color:#999;margin-bottom:8px">Chủ đề: ${esc(p.topic)}</div>`:''}
+    <div class="post-actions">${actions}</div>
+  </div>`;
+}
+
+async function publishNow(id,btn){
+  btn.disabled=true;btn.textContent='Đang đăng...';
+  try{
+    const res=await fetch('/api/posts/'+id+'/publish',{method:'POST'});
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Lỗi');}
+    document.getElementById('item-'+id)?.remove();
+    refreshStats();
+    if(!document.querySelector('#scheduled-list .post-item'))
+      document.getElementById('scheduled-list').innerHTML='<div class="empty">Chưa có bài nào được lên lịch</div>';
+  }catch(e){alert('❌ '+e.message);btn.disabled=false;btn.textContent='⚡ Đăng ngay';}
+}
+
+async function deletePost(id,btn){
+  if(!confirm('Xóa bài này?'))return;
+  btn.disabled=true;
+  try{
+    const res=await fetch('/api/posts/'+id,{method:'DELETE'});
+    if(!res.ok)throw new Error('Lỗi xóa');
+    document.getElementById('item-'+id)?.remove();
+    refreshStats();
+    if(!document.querySelector('#scheduled-list .post-item'))
+      document.getElementById('scheduled-list').innerHTML='<div class="empty">Chưa có bài nào được lên lịch</div>';
+  }catch(e){alert('❌ '+e.message);btn.disabled=false;}
+}
+
+/* ── Config ── */
+async function loadProfile(){
+  try{
+    const res=await fetch('/api/profile');const d=await res.json();
+    document.getElementById('brand_name').value=d.brand_name||'';
+    document.getElementById('shop_context').value=d.shop_context||'';
+    document.getElementById('brand_voice').value=d.brand_voice||'';
+    document.getElementById('post_length').value=d.post_length||'';
+    document.getElementById('emoji_usage').value=d.emoji_usage||'';
+    document.getElementById('hashtag_style').value=d.hashtag_style||'';
+    document.getElementById('avoid').value=(d.avoid||[]).join('\n');
+  }catch(e){}
+}
+
+async function saveProfile(){
+  const btn=document.querySelector('.cfg .btn-primary');btn.disabled=true;btn.textContent='Đang lưu...';
+  const payload={
+    brand_name:document.getElementById('brand_name').value.trim(),
+    shop_context:document.getElementById('shop_context').value.trim(),
+    brand_voice:document.getElementById('brand_voice').value.trim(),
+    post_length:document.getElementById('post_length').value.trim(),
+    emoji_usage:document.getElementById('emoji_usage').value.trim(),
+    hashtag_style:document.getElementById('hashtag_style').value.trim(),
+    avoid:document.getElementById('avoid').value.split('\n').map(s=>s.trim()).filter(Boolean),
+  };
+  try{
+    const res=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    showToast('cfg-toast',res.ok?'✅ Đã lưu & áp dụng!':'❌ Lỗi khi lưu.',res.ok?'ok':'err');
+  }catch(e){showToast('cfg-toast','❌ Không kết nối được.','err');}
+  btn.disabled=false;btn.textContent='💾 Lưu & Áp dụng';
+}
+
+/* ── Helpers ── */
+function showToast(id,msg,type){
+  const t=document.getElementById(id);t.className='toast '+type;t.textContent=msg;
+  setTimeout(()=>{t.className='toast';},4000);
+}
+function updateCount(){
+  const n=document.getElementById('post-content').value.length;
+  document.getElementById('char-count').textContent=n+' ký tự';
+}
+
+refreshStats();
+setInterval(refreshStats,15000);
+</script>
+</body>
+</html>

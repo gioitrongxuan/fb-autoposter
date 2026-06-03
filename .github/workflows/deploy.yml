@@ -8,17 +8,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          known_hosts: any
-          script: |
-            cd ~/fb-autoposter
-            git pull origin main
-            venv/bin/pip install -q -r requirements.txt
-            sudo systemctl restart fb-autoposter
-            echo "✅ Deployed at $(date)"
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            'cd ~/fb-autoposter \
+              && git pull origin main \
+              && venv/bin/pip install -q -r requirements.txt \
+              && sudo systemctl restart fb-autoposter \
+              && echo "✅ Deployed at $(date)"'

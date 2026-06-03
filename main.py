@@ -163,9 +163,10 @@ async def api_preview_image(request: Request, _: None = Depends(require_auth)):
     content = (body.get("content") or "").strip()
     if not content:
         raise HTTPException(status_code=400, detail="content required")
-    prompt = await image_client.make_image_prompt(content)
-    url = image_client.get_image_url(prompt)
-    return {"url": url, "prompt": prompt}
+    url, keywords = await image_client.get_preview_url(content)
+    if not url:
+        raise HTTPException(status_code=404, detail="Không tìm được ảnh phù hợp")
+    return {"url": url, "prompt": keywords}
 
 
 @app.post("/api/posts")
